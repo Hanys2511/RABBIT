@@ -13,39 +13,29 @@ public:
 
 	permutacja(const permutacja& other)
 	{
-		std::cout<<"kopy"<<std::endl;
-//		memcpy ( this->procesy, other.procesy, other.procesy.size() );
 		std::copy(other.procesy.begin(), other.procesy.end(),
 					  std::back_inserter(this->procesy));
 		this->Cmax = other.Cmax;
 		this->a = other.a;
-		this-> b = other.b;
-		this-> c = other.c;
+		this->b = other.b;
+		this->c = other.c;
 		this->n = other.n;
 	}
 	permutacja& operator=(const permutacja& other) = delete;
 	permutacja(permutacja&& other) = delete;
 	permutacja& operator=(permutacja&& other) = delete;
 
-	void blok_a_b()
+	void wyznacz_a()
 	{
-		int aktualnyMax=0;
-		for (int i=n-1; i >-1; i--) {														//przejrzyj listeZadan. jezeli moment rozpoczecia realizacji+r+q = Cmax,
-			if (procesy[i]->Cpi+procesy[i]->Ppi+procesy[i]->Qpi > aktualnyMax) {		//to mamy zadanie, ktore konczy caly proces
-				b=i;
-				aktualnyMax=procesy[i]->Cpi+procesy[i]->Ppi+procesy[i]->Qpi;
-			}
-		}
 		int suma_p = 0;
 		for (int i = 0; i <= b; i++) {
 			suma_p += procesy[i]->Ppi;
 		}
 		a=0;
-		while ((a<n) && (aktualnyMax-procesy[b]->Qpi != procesy[a]->Rpi+suma_p) ){
+		while ((a<b) && (Cmax-procesy[b]->Qpi != procesy[a]->Rpi+suma_p) ){
 			suma_p=suma_p-procesy[a]->Ppi;
 			a++;
 		}
-		std::cout << "A: " << a << "B " << b << std::endl;
 	}
 
 	int znajdz_zadanie_interferencyjne()
@@ -56,7 +46,6 @@ public:
 			if (procesy[i]->Qpi < procesy[b]->Qpi) {
 				znaleziono=true;
 				c=i;
-				std::cout<< "c "<< c <<std::endl;
 				break;
 			}
 		}

@@ -36,6 +36,8 @@ void wczytaj_z_pliku(int schrag, permutacja& optymalna)
 void schrage(permutacja& optymalna)
 {
 	int t = 1, Cmax = 1;
+	int cmax;
+	int pozycja = 0;
 	auto cmp = []( const std::shared_ptr<proces>& left, const std::shared_ptr<proces>& right) { return (left->Rpi > right->Rpi); };
 	std::priority_queue<std::shared_ptr<proces>, std::vector<std::shared_ptr<proces>>, decltype(cmp)> N(cmp);
 	for (auto it: optymalna.procesy) {
@@ -62,9 +64,14 @@ void schrage(permutacja& optymalna)
 			result = G.top();
 			result->Cpi = t;
 			t = t + G.top()->Ppi; //t=stary t+ppi
-			Cmax = std::max(Cmax, G.top()->Qpi + t); //Cmax=t^+qpi (chyba, ze wieksze jest Cmax stare)
+			cmax = G.top()->Qpi + t;
+			if (cmax >= Cmax) {
+				Cmax = cmax; //Cmax=t^+qpi (chyba, ze wieksze jest Cmax stare)
+				optymalna.b = pozycja;
+			}
 			optymalna.procesy.push_back(result);
 			G.pop(); //usuwa z gotowych
+			pozycja++;
 		}
 	}
 	optymalna.Cmax = Cmax;
@@ -72,12 +79,6 @@ void schrage(permutacja& optymalna)
 
 int prmtS(const permutacja optymalna)
 {
-	std::cout<<"prmtS"<<std::endl;
-	for (auto it: optymalna.procesy)
-	{
-		std::cout<< it->Rpi << " " << it->Ppi << " " << it->Qpi << std::endl;
-	}
-	std::cout<<"prmtS ed"<<std::endl;
 	int t = 1, Cmax = 1;
 	auto cmp = []( const std::shared_ptr<proces>& left, const std::shared_ptr<proces>& right) { return (left->Rpi > right->Rpi); };
 	std::priority_queue<std::shared_ptr<proces>, std::vector<std::shared_ptr<proces>>, decltype(cmp)> N(cmp);
@@ -122,60 +123,39 @@ int prmtS(const permutacja optymalna)
 
 int start(int carlierr)
 {
-//	int UB = 1, LB = 1;
 	permutacja obecna;
 	wczytaj_z_pliku(carlierr, obecna);
-//	schrage(obecna);
-//	std::cout<<obecna.n<<std::endl;
 	carlier(obecna);
-
 	return obecna.Cmax;
 }
 
 void carlier(permutacja& obecna)
 {
 	schrage(obecna);
-	std::cout<<obecna.n<<std::endl;
-	obecna.blok_a_b();
-	std::cout<<"jest a b"<<std::endl;
+	obecna.wyznacz_a();
 	if (obecna.znajdz_zadanie_interferencyjne())
 	{
-		std::cout<<"jest c"<<std::endl;
 		int rprim = obecna.wyznacz_rprim();
 		int pprim = obecna.wyznacz_pprim();
 		int qprim = obecna.wyznacz_qprim();
-		std::shared_ptr<proces> rc = obecna.procesy[obecna.c];
-		int stare_rpi = rc->Rpi;
-		std::cout<<"carlier"<<std::endl;
-		for (auto it: obecna.procesy)
-		{
-			std::cout<< it->Rpi << " " << it->Ppi << " " << it->Qpi << std::endl;
-		}
-		std::cout<<"carlier ed"<<std::endl;
-		std::cout<<"RPi "<<rc->Rpi<<std::endl;
-		std::cout<<"PPi "<<obecna.procesy[obecna.b]->Ppi<<std::endl;
-		std::cout<<"QPi "<<obecna.procesy[obecna.b]->Qpi<<std::endl;
-		std::cout<<"CPi "<<obecna.procesy[obecna.b]->Cpi<<std::endl;
-		std::cout<<"Rprim "<<rprim<<std::endl;
-		std::cout<<"Pprim "<<pprim<<std::endl;
-		rc->Rpi = std::max(rc->Rpi, rprim + pprim);
+		std::shared_ptr<proces> stary = obecna.procesy[obecna.c];
+
+		int stare_rpi = stary->Rpi;
+		stary->Rpi = std::max(stary->Rpi, rprim + pprim);
 		int LB { prmtS(obecna) };
 		if (LB < obecna.Cmax)
 		{
-			std::cout<<"r!!!!!!"<<obecna.Cmax<<std::endl;
 			carlier(obecna);
 		}
-		rc->Rpi = stare_rpi;
+		stary->Rpi = stare_rpi;
 
-		std::shared_ptr<proces> qc = obecna.procesy[obecna.c];
-		int stare_qpi = qc->Qpi;
-		qc->Qpi = std::max(qc->Qpi, qprim + pprim);
+		int stare_qpi = stary->Qpi;
+		stary->Qpi = std::max(stary->Qpi, qprim + pprim);
 		LB = prmtS(obecna);
 		if (LB < obecna.Cmax)
 		{
-			std::cout<<"q!!!!!!"<<obecna.Cmax<<std::endl;
 			carlier(obecna);
 		}
-		qc->Qpi = stare_qpi;
+		stary->Qpi = stare_qpi;
 	}
 }
